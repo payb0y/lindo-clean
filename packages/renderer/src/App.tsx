@@ -2,24 +2,19 @@ import { ThemeProvider } from '@mui/material/styles'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { setupRootStore, RootStore, RootStoreProvider } from './store'
 import { Navigator } from './navigation'
-import { AnalyticsContextProvider, GameContextProvider, LocalProvider } from './providers'
+import {  GameContextProvider, LocalProvider } from './providers'
 import { GameContext } from '@lindo/shared'
 import { TypesafeI18n } from '@lindo/i18n'
 import { CssBaseline } from '@mui/material'
 import { darkTheme, lightTheme } from './themes'
-import { useAnalytics } from './hooks'
-import { Analytics } from '@firebase/analytics'
 
 export const App = () => {
-  const analytics = useAnalytics()
-
   const didSetUpRootStoreRef = useRef(false)
   const didSetUpGameContextRef = useRef(false)
   // TODO: fix lightTheme
   const prefersDarkMode = true // useMediaQuery('(prefers-color-scheme: dark)')
   const [rootStore, setRootStore] = useState<RootStore | undefined>(undefined)
   const [gameContext, setGameContext] = useState<GameContext | undefined>(undefined)
-  const [analyticsContext, setAnalyticsContext] = useState<Analytics | undefined>(undefined)
 
   const theme = useMemo(() => (prefersDarkMode ? darkTheme : lightTheme), [prefersDarkMode])
 
@@ -46,31 +41,22 @@ export const App = () => {
       // display window
       window.lindoAPI.appReadyToShow()
 
-      // set analytics
-      const analyticsInstance = analytics.createInstance(
-        rootStore.appStore.userId,
-        rootStore.appStore.lindoVersion,
-        gameContext.platform
-      )
-      setAnalyticsContext(analyticsInstance)
       window.key = gameContext[atob('aGFzaA==') as never]
     }
   }, [rootStore, gameContext])
 
-  if (!rootStore || !gameContext || !analyticsContext) return null
+  if (!rootStore || !gameContext) return null
 
   return (
     <TypesafeI18n locale={rootStore.appStore.language}>
       <RootStoreProvider value={rootStore}>
         <LocalProvider>
-          <AnalyticsContextProvider value={analyticsContext}>
-            <GameContextProvider value={gameContext}>
-              <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <Navigator />
-              </ThemeProvider>
-            </GameContextProvider>
-          </AnalyticsContextProvider>
+          <GameContextProvider value={gameContext}>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              <Navigator />
+            </ThemeProvider>
+          </GameContextProvider>
         </LocalProvider>
       </RootStoreProvider>
     </TypesafeI18n>
